@@ -193,9 +193,6 @@ def process_adult_data_sheet4(data_file, target_geographies):
         "Net survival (%)",
         "Overall survival (%)"
     ]
-
-    #Add a line to reformat the value column names
-    ##############################################
     
     df_adult4 = df_adult4[id_cols + value_cols]
 
@@ -204,6 +201,12 @@ def process_adult_data_sheet4(data_file, target_geographies):
                         id_vars=id_cols,
                         var_name="survival_metric",
                         value_name="survival_per")
+    
+    #Format metric names to remove the (%) suffix and capitalise the words
+    df_adult4["survival_metric"] = (
+        df_adult4["survival_metric"].str.removesuffix(" (%)"))
+    
+    df_adult4["survival_metric"] = df_adult4["survival_metric"].str.title()
 
     #Rename columns
     column_map = {
