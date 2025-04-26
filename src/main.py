@@ -88,7 +88,8 @@ def process_index_data(data_file, target_geographies):
 
     #Extract data###############################################################
 
-    df_index = pd.read_excel(data_file, sheet_name="Table 5", skiprows=10)
+    to_skip = 10    #How many lines in the excel before the tabular data begins
+    df_index = pd.read_excel(data_file, sheet_name="Table 5", skiprows=to_skip)
 
     #Transform data#############################################################
 
@@ -146,10 +147,18 @@ def process_index_data(data_file, target_geographies):
     #Load data##################################################################
     upload_survival_data(df_index, table="cancer_survival_index")
 
-
 #Function for processing the adult cancer survival (Table 4) data
 def process_adult_data_sheet4(data_file, target_geographies):
-    pass
+    
+    #Extract data###############################################################
+
+    to_skip = 9 #How many lines in the excel before the tabular data begins
+    df_adult4 = pd.read_excel(data_file, sheet_name="Table 4", skiprows=to_skip)
+
+    #Transform data#############################################################
+
+    #Load data##################################################################
+
 
 def main(scrape=True):
 
@@ -174,7 +183,7 @@ def main(scrape=True):
     for data_file in data_files:
         if data_file.split("/")[-1].startswith("Index"):
             print(f"-> {data_file.split("/")[-1]}")
-            process_index_data(data_file, target_geographies)
+            #process_index_data(data_file, target_geographies)
 
         if data_file.split("/")[-1].startswith("adult"):
             print(f"-> {data_file.split("/")[-1]}")
