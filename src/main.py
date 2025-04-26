@@ -191,6 +191,24 @@ def process_adult_data_sheet4(data_file, target_geographies):
     #Filter to select geographies
     df_adult4 = df_adult4[df_adult4["Geography code"].isin(target_geographies)]
 
+    #Move the subcategory of the standardisation to its own column
+    std = df_adult4["Standardisation type"]
+    #    Get all values in the column that are standardised
+    df_adult4["standardisation_type_subcategory"] = (
+        std.where(std != "Non-standardised"))
+    
+    #    Remove everything except what is between the brackets
+    #    e.g. "Age-standardised (5 age groups)" => "5 age groups"
+    std_sc = df_adult4["standardisation_type_subcategory"]
+    std_sc = std_sc.str.split("(").str[1]
+    std_sc = std_sc.str.split(")").str[0]
+    df_adult4["standardisation_type_subcategory"] = std_sc
+
+    #Remove the subcategory from the original standardisation type column
+    std = std.str.split("(").str[0]
+    std = std.str.strip()
+    df_adult4["Standardisation type"] = std
+
     #Stamp data with timestamp
     df_adult4["date_uploaded"] = dt.today()
 
@@ -208,24 +226,27 @@ def process_adult_data_sheet4(data_file, target_geographies):
         
     df_adult4["date_snapshot"] = date_snapshot
 
-    #Remove Unused Columns
+    #List of id columns (not related to the metric value) to keep
     id_cols = [
         "Geography name",
         "Geography code",
         "Cancer site", 
         "Gender",
         "Standardisation type",
+        "standardisation_type_subcategory",
         "Years since diagnosis",
         "Patients",
         "date_uploaded",
         "date_diagnosis_window",
         "date_snapshot"]
     
+    # List of metric value columns
     value_cols = [
         "Net survival (%)",
         "Overall survival (%)"
     ]
     
+    #Remove unused columns
     df_adult4 = df_adult4[id_cols + value_cols]
 
     #Unpivot the data around the survival metrics
@@ -253,8 +274,6 @@ def process_adult_data_sheet4(data_file, target_geographies):
     df_adult4.columns = df_adult4.columns.str.replace('\n', ' ', regex=False)
     df_adult4.columns = df_adult4.columns.str.strip().str.replace(' ', '_')
     df_adult4.columns = df_adult4.columns.str.lower()
-
-    print(df_adult4.head())
 
     #     Trans step:
     # -> Filter Geography
