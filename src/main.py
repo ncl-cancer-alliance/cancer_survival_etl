@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from calendar import month_name
 from datetime import datetime as dt
 from sqlalchemy import create_engine, MetaData, Table, text, insert
 
@@ -82,6 +83,30 @@ def upload_survival_data(data, table, dsn="SANDPIT",
                     index=False, chunksize=100, method="multi")
         
         con.commit()
+
+#Function to parse the date of the sanpshot from the data file
+#This works by checking the first line of the "Methdology" column in the 
+#"Notes and definitions" sheet and looking for the Month and Year the represents
+#the snapshot of when the data was captured. If the function is unable to do
+#this, it throws an error on the assumption it will be caught.
+def get_snapshot_date_from_adult(data_file):
+
+    to_skip = 10 #How many lines in the excel before the tabular data begins
+    df = pd.read_excel(data_file, sheet_name="Notes and definitions", 
+                       skiprows=to_skip)
+    
+    target_line = df.iloc[0,0]
+    month_year = target_line.split(" ")[-3:-1]
+
+    #Check if valid month
+    if month_name[0] not in month_name:
+        raise Exception()
+    
+    #Check if valid year
+    if int(month_year[1]) < 2000 or int(month_year[1]) > 2100:
+        raise Exception() 
+
+    return " ".join(month_year)
 
 #Function for processing the index data
 def process_index_data(data_file, target_geographies):
@@ -173,8 +198,15 @@ def process_adult_data_sheet4(data_file, target_geographies):
     diagnosis_window_years = data_file.split(".")[-2].split("_")[-2:]
     df_adult4["date_diagnosis_window"] = "-".join(diagnosis_window_years)
 
-    #Stamp data with the date of the snapshot(?)
-    df_adult4["date_snapshot"] = None
+    #Stamp data with the date of the snapshot (if possible)
+    try:
+        date_snapshot = get_snapshot_date_from_adult(data_file)
+    except:
+        print("    -> ", 
+              "Warning: Unable to extract the snapshot date from the data.")
+        date_snapshot = None
+        
+    df_adult4["date_snapshot"] = date_snapshot
 
     #Remove Unused Columns
     id_cols = [
