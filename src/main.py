@@ -143,8 +143,6 @@ def process_index_data(data_file, target_geographies):
     df_index.columns = df_index.columns.str.strip().str.replace(' ', '_')
     df_index.columns = df_index.columns.str.lower()
 
-    print(df_index.shape)
-
     #Load data##################################################################
     upload_survival_data(df_index, table="cancer_survival_index")
 
