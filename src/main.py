@@ -93,6 +93,9 @@ def process_index_data(data_file, target_geographies):
 
     #Transform data#############################################################
 
+    #NOTE: Some data does not make sense and could be filtered out
+    # (i.e 10 years since diagnosis in 2020)
+
     #Filter to select geographies
     df_index = df_index[df_index["Geography code"].isin(target_geographies)]
 
