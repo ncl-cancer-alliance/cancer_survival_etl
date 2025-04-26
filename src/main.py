@@ -160,6 +160,79 @@ def process_adult_data_sheet4(data_file, target_geographies):
 
     #Transform data#############################################################
 
+    #NOTE: This process will leave non-age standardised and overall survival
+    # data in for non-NCL areas. This needs to be filtered out in the frontend
+
+    #Filter to select geographies
+    df_adult4 = df_adult4[df_adult4["Geography code"].isin(target_geographies)]
+
+    #Stamp data with timestamp
+    df_adult4["date_uploaded"] = dt.today()
+
+    #Stamp data with the window of diagnosis (in the filename)
+    diagnosis_window_years = data_file.split(".")[-2].split("_")[-2:]
+    df_adult4["date_diagnosis_window"] = "-".join(diagnosis_window_years)
+
+    #Stamp data with the date of the snapshot(?)
+    df_adult4["date_snapshot"] = None
+
+    #Remove Unused Columns
+    id_cols = [
+        "Geography name",
+        "Geography code",
+        "Cancer site", 
+        "Gender",
+        "Standardisation type",
+        "Years since diagnosis",
+        "Patients",
+        "date_uploaded",
+        "date_diagnosis_window",
+        "date_snapshot"]
+    
+    value_cols = [
+        "Net survival (%)",
+        "Overall survival (%)"
+    ]
+
+    #Add a line to reformat the value column names
+    ##############################################
+    
+    df_adult4 = df_adult4[id_cols + value_cols]
+
+    #Unpivot the data around the survival metrics
+    df_adult4 = pd.melt(df_adult4, 
+                        id_vars=id_cols,
+                        var_name="survival_metric",
+                        value_name="survival_per")
+
+    #Rename columns
+    column_map = {
+        "Geography name": "Area name",
+        "Geography code": "Area code",
+        "Patients": "patient_numbers"
+    }
+
+    df_adult4 = df_adult4.rename(column_map)
+
+    print(df_adult4.head())
+
+    #     Trans step:
+    # -> Filter Geography
+    # [Note the adult data has London data]
+    # -> Pivot by survival type (Presume it's easier to leave out the CI data)
+    # [Impact of attempting to pivot before removing the CI data? (Performance + Output)]
+    # -> Stamp data with timestamp
+    # -> Stamp with time period
+    # -> Something to handle "unsuitable data"?
+    # 	-> Should not use non-age standardised non-NCL data
+    # 	-> Should not use overall survival non-NCL data
+    # 	-> Should I filter this here or in the frontend (Frontend probably)
+    # -> Group age standardisation together?
+    # 	-> Just add an additional column if they need to be seperated later
+    # -> Trim columns
+    # -> Rename (hard)
+    # -> Rename (soft)
+
     #Load data##################################################################
 
 
