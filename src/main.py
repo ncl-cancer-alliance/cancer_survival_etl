@@ -275,25 +275,8 @@ def process_adult_data_sheet4(data_file, target_geographies):
     df_adult4.columns = df_adult4.columns.str.strip().str.replace(' ', '_')
     df_adult4.columns = df_adult4.columns.str.lower()
 
-    #     Trans step:
-    # -> Filter Geography
-    # [Note the adult data has London data]
-    # -> Pivot by survival type (Presume it's easier to leave out the CI data)
-    # [Impact of attempting to pivot before removing the CI data? (Performance + Output)]
-    # -> Stamp data with timestamp
-    # -> Stamp with time period
-    # -> Something to handle "unsuitable data"?
-    # 	-> Should not use non-age standardised non-NCL data
-    # 	-> Should not use overall survival non-NCL data
-    # 	-> Should I filter this here or in the frontend (Frontend probably)
-    # -> Group age standardisation together?
-    # 	-> Just add an additional column if they need to be seperated later
-    # -> Trim columns
-    # -> Rename (hard)
-    # -> Rename (soft)
-
     #Load data##################################################################
-
+    upload_survival_data(df_adult4, table="cancer_survival_adult4")
 
 def main(scrape=True):
 
@@ -318,7 +301,7 @@ def main(scrape=True):
     for data_file in data_files:
         if data_file.split("/")[-1].startswith("Index"):
             print(f"-> {data_file.split("/")[-1]}")
-            #process_index_data(data_file, target_geographies)
+            process_index_data(data_file, target_geographies)
 
         if data_file.split("/")[-1].startswith("adult"):
             print(f"-> {data_file.split("/")[-1]}")
