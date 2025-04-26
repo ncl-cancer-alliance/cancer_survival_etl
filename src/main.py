@@ -217,6 +217,11 @@ def process_adult_data_sheet4(data_file, target_geographies):
 
     df_adult4 = df_adult4.rename(column_map)
 
+    #Format column names
+    df_adult4.columns = df_adult4.columns.str.replace('\n', ' ', regex=False)
+    df_adult4.columns = df_adult4.columns.str.strip().str.replace(' ', '_')
+    df_adult4.columns = df_adult4.columns.str.lower()
+
     print(df_adult4.head())
 
     #     Trans step:
