@@ -247,7 +247,7 @@ def process_adult_data_sheet4(data_file, target_geographies):
         "Patients": "patient_numbers"
     }
 
-    df_adult4 = df_adult4.rename(column_map)
+    df_adult4 = df_adult4.rename(columns=column_map)
 
     #Format column names
     df_adult4.columns = df_adult4.columns.str.replace('\n', ' ', regex=False)
