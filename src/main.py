@@ -76,10 +76,12 @@ def upload_survival_data(data, table, dsn="SANDPIT",
 
     with engine.connect() as con:
         #Truncate existing data to prevent overlapping data in the table
+        print("    -> Removing existing data")
         con.execute(text(f"TRUNCATE TABLE [{schema}].[{table}];"))
 
         #Upload the data
-        data.to_sql(table, engine, schema=schema, if_exists="append", 
+        print(f"    -> Uploading new data ({data.shape[0]} rows)")
+        data.to_sql(table, con, schema=schema, if_exists="append", 
                     index=False, chunksize=100, method="multi")
         
         con.commit()
@@ -125,11 +127,11 @@ def process_index_data(data_file, target_geographies):
     df_index = df_index[df_index["Geography code"].isin(target_geographies)]
 
     #Derive data_substituion
-    df_index["data_substitued"] = np.where(
+    df_index["data_substituted"] = np.where(
         df_index["Substituted by Other Geography"].isnull() == 8, 0, 1)
 
     #Stamp data with timestamp
-    df_index["date_uploaded"] = dt.today()
+    df_index["date_upload"] = dt.today()
 
     #Populate extra Persons rows
     df_breast_persons = df_index[(df_index["Cancer site"] == "Breast") 
@@ -153,19 +155,19 @@ def process_index_data(data_file, target_geographies):
         "Upper CI",
         "Precision",
         "Standard error",
-        "data_substitued",
-        "date_uploaded"]
+        "data_substituted",
+        "date_upload"]
     
     df_index = df_index[columns_to_keep]
 
     #Rename columns
     column_map = {
         "Geography name": "Area name",
-        "Area code": "Area code",
-        "Survival (%)": "sruvival_per"
+        "Geography code": "Area code",
+        "Survival (%)": "survival_per"
     }
 
-    df_index = df_index.rename(column_map)
+    df_index = df_index.rename(columns=column_map)
 
     #Format column names
     df_index.columns = df_index.columns.str.replace('\n', ' ', regex=False)
@@ -210,7 +212,7 @@ def process_adult_data_sheet4(data_file, target_geographies):
     df_adult4["Standardisation type"] = std
 
     #Stamp data with timestamp
-    df_adult4["date_uploaded"] = dt.today()
+    df_adult4["date_upload"] = dt.today()
 
     #Stamp data with the window of diagnosis (in the filename)
     diagnosis_window_years = data_file.split(".")[-2].split("_")[-2:]
@@ -236,7 +238,7 @@ def process_adult_data_sheet4(data_file, target_geographies):
         "standardisation_type_subcategory",
         "Years since diagnosis",
         "Patients",
-        "date_uploaded",
+        "date_upload",
         "date_diagnosis_window",
         "date_snapshot"]
     
