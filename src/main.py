@@ -128,7 +128,7 @@ def process_index_data(data_file, target_geographies):
 
     #Derive data_substituion
     df_index["data_substituted"] = np.where(
-        df_index["Substituted by Other Geography"].isnull() == 8, 0, 1)
+        df_index["Substituted by Other Geography"].isnull(), 0, 1)
 
     #Stamp data with timestamp
     df_index["date_upload"] = dt.today()
@@ -178,7 +178,7 @@ def process_index_data(data_file, target_geographies):
     upload_survival_data(df_index, table="cancer_survival_index")
 
 #Function for processing the adult cancer survival (Table 4) data
-def process_adult_data_sheet4(data_file, target_geographies):
+def process_adult_data_sheet4(data_file, target_geographies=[]):
     
     #Extract data###############################################################
 
@@ -190,8 +190,15 @@ def process_adult_data_sheet4(data_file, target_geographies):
     #NOTE: This process will leave non-age standardised and overall survival
     # data in for non-NCL areas. This needs to be filtered out in the frontend
 
-    #Filter to select geographies
-    df_adult4 = df_adult4[df_adult4["Geography code"].isin(target_geographies)]
+    #Filter to mark the core areas (NCL, London, England)
+    df_adult4["area_core"] = (
+        df_adult4["Geography code"].isin(target_geographies).astype(int))
+    
+    #Filter out data that is not core or a Cancer Alliance
+    df_adult4 = df_adult4[(
+            (df_adult4["area_core"] == 1) | 
+            (df_adult4["Geography type"] == "Cancer Alliance")
+    )]
 
     #Move the subcategory of the standardisation to its own column
     std = df_adult4["Standardisation type"]
@@ -228,8 +235,19 @@ def process_adult_data_sheet4(data_file, target_geographies):
         
     df_adult4["date_snapshot"] = date_snapshot
 
+    #Populate extra Persons rows 
+    #(This data is only missing for the national figures in the adult data)
+    df_breast_persons = df_adult4[(
+        (df_adult4["Cancer site"] == "Breast") &
+        (df_adult4["Gender"] == "Female") &
+        (df_adult4["Geography code"] == "E92000001")
+    )].copy()
+    df_breast_persons["Gender"] = "Persons"
+    df_adult4 = pd.concat([df_adult4, df_breast_persons])
+
     #List of id columns (not related to the metric value) to keep
     id_cols = [
+        "Geography type",
         "Geography name",
         "Geography code",
         "Cancer site", 
@@ -238,6 +256,7 @@ def process_adult_data_sheet4(data_file, target_geographies):
         "standardisation_type_subcategory",
         "Years since diagnosis",
         "Patients",
+        "area_core",
         "date_upload",
         "date_diagnosis_window",
         "date_snapshot"]
@@ -265,6 +284,7 @@ def process_adult_data_sheet4(data_file, target_geographies):
 
     #Rename columns
     column_map = {
+        "Geography type": "Area type",
         "Geography name": "Area name",
         "Geography code": "Area code",
         "Patients": "patient_numbers"
@@ -286,7 +306,7 @@ def main(scrape=True):
         #Pull the latest data
         print("Downloading the latest data:")
         scrape_latest_data()
-        print()
+        print("-> Download complete\n")
 
     #Get data files
     data_dir = "./data/"
@@ -310,4 +330,4 @@ def main(scrape=True):
             process_adult_data_sheet4(data_file, target_geographies)
 
 
-main(scrape=False)
+main(scrape=True)
