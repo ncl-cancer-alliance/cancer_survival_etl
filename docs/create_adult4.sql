@@ -1,7 +1,9 @@
 --Create table statement for the Index data
 CREATE TABLE [Data_Lab_NCL_Dev].[GrahamR].[cancer_survival_adult4](
+	area_type NVARCHAR(40) NOT NULL,
 	area_code CHAR(9) NOT NULL,
 	area_name nVARCHAR(100) NOT NULL,
+	area_core TINYINT NOT NULL,
 	cancer_site nVARCHAR(40) NOT NULL,
 	gender nVARCHAR(7) NOT NULL,
 	standardisation_type nVARCHAR(40) NOT NULL,
