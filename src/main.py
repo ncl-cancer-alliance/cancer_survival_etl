@@ -315,8 +315,8 @@ def main(scrape=True):
                   and f.endswith(".xlsx")]
     
     #Set list of target geographies
-    # NCL - E54000028, London - E40000003, England - E92000001
-    target_geographies = ["E54000028", "E40000003", "E92000001"]
+    # NCL (CA) - E56000027, London - E40000003, England - E92000001
+    target_geographies = ["E56000027", "E40000003", "E92000001"]
 
     #Split the files between Index and adult
     print("Processing survival data:")
