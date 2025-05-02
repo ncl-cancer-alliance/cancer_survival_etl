@@ -110,6 +110,16 @@ def get_snapshot_date_from_adult(data_file):
 
     return " ".join(month_year)
 
+#Create a Persons gender copy of gender exclusive data
+def generalise_gender(df, cancer_site, base_gender):
+    #Populate extra Persons rows
+    df_gendered = df[(df["Cancer site"] == cancer_site) 
+                                 & (df["Gender"] == base_gender)].copy()
+    df_gendered["Gender"] = "Persons"
+    df = pd.concat([df, df_gendered])
+
+    return df
+
 #Function for processing the index data
 def process_index_data(data_file, target_geographies):
 
@@ -133,11 +143,12 @@ def process_index_data(data_file, target_geographies):
     #Stamp data with timestamp
     df_index["date_upload"] = dt.today()
 
-    #Populate extra Persons rows
-    df_breast_persons = df_index[(df_index["Cancer site"] == "Breast") 
-                                 & (df_index["Gender"] == "Female")].copy()
-    df_breast_persons["Gender"] = "Persons"
-    df_index = pd.concat([df_index, df_breast_persons])
+    #Populate extra Persons rows for the breast data
+    df_index = generalise_gender(df_index, "Breast", "Female")
+
+    #Rename the index site to overall for clarity
+    df_index["Cancer site"] = (
+        df_index["Cancer site"].str.replace('Index', 'Overall'))
 
     #Remove Unused Columns
     columns_to_keep = [
@@ -235,7 +246,7 @@ def process_adult_data_sheet4(data_file, target_geographies=[]):
         
     df_adult4["date_snapshot"] = date_snapshot
 
-    #Populate extra Persons rows 
+    #Populate extra Persons rows for breast
     #(This data is only missing for the national figures in the adult data)
     df_breast_persons = df_adult4[(
         (df_adult4["Cancer site"] == "Breast") &
@@ -244,6 +255,15 @@ def process_adult_data_sheet4(data_file, target_geographies=[]):
     )].copy()
     df_breast_persons["Gender"] = "Persons"
     df_adult4 = pd.concat([df_adult4, df_breast_persons])
+
+    male_sites = ["Larynx", "Prostate"]
+    female_sites = ["Cervix", "Ovary"]
+
+    for male_site in male_sites:
+        df_adult4 = generalise_gender(df_adult4, male_site, "Male")
+
+    for female_site in female_sites:
+        df_adult4 = generalise_gender(df_adult4, female_site, "Female")
 
     #List of id columns (not related to the metric value) to keep
     id_cols = [
