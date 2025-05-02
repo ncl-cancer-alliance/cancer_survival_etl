@@ -4,10 +4,20 @@ ETL code for processing cancer alliance level data from the NHS Digital Cancer S
 
 ## Changelog
 
-### [0.0.0] - 2025-04-10
+### [1.0.0] - 2025-05-02
 #### Added
-- Awaiting first commit
+- Core functionality
+- Scrape source data from NHS Digital
+- Processes the Cancer Index data and Adult Cancer Survival data
 
+## Usage
+The code requires a DSN setup with the NCL Sandpit set up with the name "SANDPIT".
+
+The code is self contained within the src/main.py script.
+
+The docs directory contains scripts for creating the destination tables.
+
+##
 *The contents and structure of this template were largely based on the template used by the NCL ICB Analytics team available here: [NCL ICB Project Template](https://github.com/ncl-icb-analytics/ncl_project)*
 
 ## Licence
