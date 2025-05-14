@@ -144,7 +144,16 @@ def process_index_data(data_file, target_geographies):
     df_index["date_upload"] = dt.today()
 
     #Populate extra Persons rows for the breast data
-    df_index = generalise_gender(df_index, "Breast", "Female")
+    df_dupe = df_index[(df_index["Cancer site"] == "Breast") 
+                       & (df_index["Gender"] == "Female")
+                       & (df_index["Age at diagnosis"] == "All ages")].copy()
+    df_dupe["Gender"] = "Persons"
+    df_index = pd.concat([df_index, df_dupe])
+
+    #Remove the now generalised breast data
+    df_index = df_index[~((df_index["Cancer site"] == "Breast") 
+                       & (df_index["Gender"] == "Female")
+                       & (df_index["Age at diagnosis"] == "All ages"))]
 
     #Rename the index site to overall for clarity
     df_index["Cancer site"] = (
