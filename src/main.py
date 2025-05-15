@@ -158,6 +158,9 @@ def process_index_data(data_file, target_geographies):
     #Rename the index site to overall for clarity
     df_index["Cancer site"] = (
         df_index["Cancer site"].str.replace('Index', 'Overall'))
+    
+    #Remove "Other" site from the data
+    df_index = df_index[~(df_index["Cancer site"] == "Other")]
 
     #Remove Unused Columns
     columns_to_keep = [
