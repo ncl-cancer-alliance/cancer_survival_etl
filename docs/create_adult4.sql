@@ -1,23 +1,18 @@
---Create table statement for the Index data
-CREATE TABLE [Data_Lab_NCL_Dev].[GrahamR].[cancer_survival_adult4](
-	area_type NVARCHAR(40) NOT NULL,
-	area_code CHAR(9) NOT NULL,
-	area_name nVARCHAR(100) NOT NULL,
-	area_core TINYINT NOT NULL,
-	cancer_site nVARCHAR(40) NOT NULL,
-	gender nVARCHAR(7) NOT NULL,
-	standardisation_type nVARCHAR(40) NOT NULL,
-	standardisation_type_subcategory nVARCHAR(40),
-	years_since_diagnosis TINYINT NOT NULL,
-	patient_numbers INT NOT NULL,
-	survival_metric nVARCHAR(40) NOT NULL,
-	survival_per FLOAT,
-	date_diagnosis_window CHAR(9) NOT NULL,
-	date_snapshot nVARCHAR(14),
-	date_upload DATE NOT NULL,
-
-	PRIMARY KEY (area_code, cancer_site, 
-		gender, standardisation_type, years_since_diagnosis, 
-		survival_metric, date_diagnosis_window)
-);
-
+--Snowflake SQL to create the Adult 4 table
+CREATE TABLE DEV__MODELLING.CANCER__SURVIVAL.ADULT_4 (
+    "AREA_TYPE" VARCHAR,
+    "AREA_CODE" VARCHAR,
+    "AREA_NAME" VARCHAR,
+    "IS_AREA_CORE" BOOLEAN,
+    "CANCER_SITE" VARCHAR,
+    "GENDER" VARCHAR,
+    "STANDARDISATION_TYPE" VARCHAR,
+    "STANDARDISATION_TYPE_SUBCATEGORY" VARCHAR,
+    "YEARS_SINCE_DIAGNOSIS" NUMBER,
+    "PATIENT_NUMBERS" NUMBER,
+    "SURVIVAL_METRIC" VARCHAR,
+    "SURVIVAL_PERCENT" FLOAT,
+    "DATE_DIAGNOSIS_WINDOW" VARCHAR,
+    "DATE_SNAPSHOT" VARCHAR,
+    "_TIMESTAMP" TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
+)
