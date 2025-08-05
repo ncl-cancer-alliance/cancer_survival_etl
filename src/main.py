@@ -5,8 +5,12 @@ from calendar import month_name
 from datetime import datetime as dt
 from sqlalchemy import create_engine, MetaData, Table, text, insert
 
+from dotenv import load_dotenv
+from os import getenv
 from os import listdir
 from os.path import isfile, join
+
+from snowflake.connector import connect
 
 import utils.database_util as db
 import utils.scrape_util as scrape
@@ -66,26 +70,6 @@ def scrape_latest_data(
 
             scrape.save_file(content, file_name)
 
-#Upload the survival data
-def upload_survival_data(data, table, dsn="SANDPIT", 
-                         database="Data_Lab_NCL_Dev", 
-                         schema="GrahamR"):
-    
-    #Establish connection
-    engine = db.db_connect(dsn, database)
-
-    with engine.connect() as con:
-        #Truncate existing data to prevent overlapping data in the table
-        print("    -> Removing existing data")
-        con.execute(text(f"TRUNCATE TABLE [{schema}].[{table}];"))
-
-        #Upload the data
-        print(f"    -> Uploading new data ({data.shape[0]} rows)")
-        data.to_sql(table, con, schema=schema, if_exists="append", 
-                    index=False, chunksize=100, method="multi")
-        
-        con.commit()
-
 #Function to parse the date of the sanpshot from the data file
 #This works by checking the first line of the "Methdology" column in the 
 #"Notes and definitions" sheet and looking for the Month and Year the represents
@@ -121,7 +105,7 @@ def generalise_gender(df, cancer_site, base_gender):
     return df
 
 #Function for processing the index data
-def process_index_data(data_file, target_geographies):
+def process_index_data(ctx, data_file, target_geographies):
 
     #Extract data###############################################################
 
@@ -138,7 +122,7 @@ def process_index_data(data_file, target_geographies):
 
     #Derive data_substituion
     df_index["data_substituted"] = np.where(
-        df_index["Substituted by Other Geography"].isnull(), 0, 1)
+        df_index["Substituted by Other Geography"].isnull(), False, True)
 
     #Stamp data with timestamp
     df_index["date_upload"] = dt.today()
@@ -198,10 +182,36 @@ def process_index_data(data_file, target_geographies):
     df_index.columns = df_index.columns.str.lower()
 
     #Load data##################################################################
-    upload_survival_data(df_index, table="cancer_survival_index")
+
+    rename_index = {
+        "area_code": "AREA_CODE",
+        "area_name": "AREA_NAME",
+        "cancer_site": "CANCER_SITE",
+        "gender": "GENDER",
+        "age_at_diagnosis": "AGE_AT_DIAGNOSIS",
+        "standardisation_type": "STANDARDISATION_TYPE",
+        "diagnosis_year": "YEAR_OF_DIAGNOSIS",
+        "years_since_diagnosis": "YEARS_SINCE_DIAGNOSIS",
+        "patient_numbers": "PATIENT_NUMBERS",
+        "survival_per": "SURVIVAL_PERCENT",
+        "lower_ci": "LOWER_CI",
+        "upper_ci": "UPPER_CI",
+        "precision": "PRECISION",
+        "standard_error": "STANDARD_ERROR",
+        "data_substituted": "IS_DATA_SUBTITUTED"
+    }
+
+    df_index = df_index[rename_index.keys()].rename(columns=rename_index)
+
+    database = getenv("DATABASE") 
+    schema = getenv("SCHEMA")
+    destination_table = getenv("DESTINATION_INDEX")
+    destination = f"{database}.{schema}.{destination_table}"
+
+    db.upload_df(ctx, df_index, destination, replace=True)
 
 #Function for processing the adult cancer survival (Table 4) data
-def process_adult_data_sheet4(data_file, target_geographies=[]):
+def process_adult_data_sheet4(ctx, data_file, target_geographies=[]):
     
     #Extract data###############################################################
 
@@ -215,11 +225,11 @@ def process_adult_data_sheet4(data_file, target_geographies=[]):
 
     #Filter to mark the core areas (NCL, London, England)
     df_adult4["area_core"] = (
-        df_adult4["Geography code"].isin(target_geographies).astype(int))
+        df_adult4["Geography code"].isin(target_geographies))
     
     #Filter out data that is not core or a Cancer Alliance
     df_adult4 = df_adult4[(
-            (df_adult4["area_core"] == 1) | 
+            (df_adult4["area_core"] == True) | 
             (df_adult4["Geography type"] == "Cancer Alliance")
     )]
 
@@ -330,9 +340,37 @@ def process_adult_data_sheet4(data_file, target_geographies=[]):
     df_adult4.columns = df_adult4.columns.str.lower()
 
     #Load data##################################################################
-    upload_survival_data(df_adult4, table="cancer_survival_adult4")
+
+    rename_adult4 = {
+        "area_type": "AREA_TYPE",
+        "area_code": "AREA_CODE",
+        "area_name": "AREA_NAME",
+        "area_core": "IS_AREA_CORE",
+        "cancer_site": "CANCER_SITE",
+        "gender": "GENDER",
+        "standardisation_type": "STANDARDISATION_TYPE",
+        "standardisation_type_subcategory": "STANDARDISATION_TYPE_SUBCATEGORY",
+        "years_since_diagnosis": "YEARS_SINCE_DIAGNOSIS",
+        "patient_numbers": "PATIENT_NUMBERS",
+        "survival_metric": "SURVIVAL_METRIC",
+        "survival_per": "SURVIVAL_PERCENT",
+        "date_diagnosis_window": "DATE_DIAGNOSIS_WINDOW",
+        "date_snapshot": "DATE_SNAPSHOT"
+    }
+
+    df_adult4 = df_adult4[rename_adult4.keys()].rename(columns=rename_adult4)
+
+    database = getenv("DATABASE") 
+    schema = getenv("SCHEMA")
+    destination_table = getenv("DESTINATION_ADULT4")
+    destination = f"{database}.{schema}.{destination_table}"
+    
+    db.upload_df(ctx, df_adult4, destination, replace=True)
 
 def main(scrape=True):
+
+    ### Load environment variables 
+    load_dotenv(override=True)
 
     if scrape:
         #Pull the latest data
@@ -350,16 +388,27 @@ def main(scrape=True):
     # NCL (CA) - E56000027, London - E40000003, England - E92000001
     target_geographies = ["E56000027", "E40000003", "E92000001"]
 
+    #Establish Snowflake connection
+    ctx = connect(
+        account=getenv("ACCOUNT"),
+        user=getenv("USER"),
+        authenticator=getenv("AUTHENTICATOR"),
+        role=getenv("ROLE"),
+        warehouse=getenv("WAREHOUSE"),
+        database=getenv("DATABASE"),
+        schema=getenv("SCHEMA")
+    )
+
     #Split the files between Index and adult
     print("Processing survival data:")
     for data_file in data_files:
         if data_file.split("/")[-1].startswith("Index"):
             print(f"-> {data_file.split("/")[-1]}")
-            process_index_data(data_file, target_geographies)
+            process_index_data(ctx, data_file, target_geographies)
 
         if data_file.split("/")[-1].startswith("adult"):
             print(f"-> {data_file.split("/")[-1]}")
-            process_adult_data_sheet4(data_file, target_geographies)
+            process_adult_data_sheet4(ctx, data_file, target_geographies)
 
 
 main(scrape=True)
