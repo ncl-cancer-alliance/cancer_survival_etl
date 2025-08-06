@@ -1,0 +1,48 @@
+CREATE OR REPLACE VIEW DEV__REPORTING.CANCER__SURVIVAL.INDEX 
+COMMENT="Reporting View for Survival Dashboard"
+AS
+
+SELECT 
+    * EXCLUDE _TIMESTAMP,
+    CASE CANCER_SITE
+        WHEN 'Overall' THEN 1
+        ELSE 2
+    END AS SORT_SITE,
+    
+    CASE GENDER
+        WHEN 'Persons' THEN 1
+        ELSE 2
+    END AS SORT_GENDER,
+    
+    CASE AGE_AT_DIAGNOSIS
+        WHEN 'All ages' THEN 1
+        ELSE 2
+    END AS SORT_AGE
+    
+FROM DEV__MODELLING.CANCER__SURVIVAL.INDEX;
+
+CREATE OR REPLACE VIEW DEV__PUBLISHED_REPORTING__SECONDARY_USE.CANCER__SURVIVAL.INDEX 
+COMMENT="Published View for Survival Dashboard"
+AS
+
+SELECT 
+AREA_CODE AS "Area_Code", 
+AREA_NAME AS "Area_Name", 
+CANCER_SITE AS "Cancer_Site", 
+GENDER AS "Gender",
+AGE_AT_DIAGNOSIS AS "Age_at_Diagnosis", 
+STANDARDISATION_TYPE AS "Standardisation_Type",
+YEAR_OF_DIAGNOSIS AS "Year_of_Diagnosis", 
+YEARS_SINCE_DIAGNOSIS AS "Years_Since_Diagnosis", 
+PATIENT_NUMBERS AS "Patient_Numbers", 
+SURVIVAL_PERCENT AS "Survival_Per",  
+LOWER_CI AS "Lower_CI", 
+UPPER_CI AS "Upper_CI", 
+PRECISION AS "Precision", 
+STANDARD_ERROR AS "Standard_Error", 
+IS_DATA_SUBTITUTED AS "Data_Substituted",
+SORT_SITE AS "Sort_Site",
+SORT_GENDER AS "Sort_Gender",
+SORT_AGE AS "Sort_Age"
+
+FROM DEV__REPORTING.CANCER__SURVIVAL.INDEX;
