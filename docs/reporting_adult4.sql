@@ -1,0 +1,43 @@
+CREATE OR REPLACE VIEW DEV__REPORTING.CANCER__SURVIVAL.PROCESSED_ADULT_4
+COMMENT="Reporting View for Survival Dashboard"
+AS
+
+--Script to pull in the data for core areas in the adult4 data
+SELECT 
+    * EXCLUDE _TIMESTAMP, 
+	CONCAT(CANCER_SITE, GENDER, YEARS_SINCE_DIAGNOSIS, DATE_DIAGNOSIS_WINDOW) AS JOIN_KEY,
+    CASE GENDER
+        WHEN 'Persons' THEN 1
+        ELSE 2
+    END AS SORT_GENDER
+FROM DEV__MODELLING.CANCER__SURVIVAL.ADULT_4
+WHERE IS_AREA_CORE = 1
+--Only include age-standardised data and the net survival metric for non-NCL data
+AND (
+	(STANDARDISATION_TYPE = 'Age-standardised' AND SURVIVAL_METRIC = 'Net Survival')
+	OR AREA_CODE = 'E56000027'
+);
+
+CREATE OR REPLACE VIEW DEV__PUBLISHED_REPORTING__SECONDARY_USE.CANCER__SURVIVAL.PROCESSED_ADULT_4
+COMMENT="Published View for Survival Dashboard"
+AS
+
+SELECT
+AREA_TYPE AS "Area_Type", 
+AREA_CODE AS "Area_Code", 
+AREA_NAME AS "Area_Name", 
+IS_AREA_CORE AS "Area_Core", 
+CANCER_SITE AS "Cancer_Site", 
+GENDER AS "Gender", 
+STANDARDISATION_TYPE AS "Standardisation_Type", 
+STANDARDISATION_TYPE_SUBCATEGORY AS "Standardisation_Subcategory", 
+YEARS_SINCE_DIAGNOSIS AS "Years_Since_Diagnosis", 
+PATIENT_NUMBERS AS "Patient_Numbers", 
+SURVIVAL_METRIC AS "Survival_Metric", 
+SURVIVAL_PERCENT AS "Survival_Per", 
+DATE_DIAGNOSIS_WINDOW AS "Date_Diagnosis_Window", 
+DATE_SNAPSHOT AS "Date_Snapshot", 
+JOIN_KEY,
+SORT_GENDER AS "Sort_Gender"
+
+FROM DEV__REPORTING.CANCER__SURVIVAL.PROCESSED_ADULT_4;
