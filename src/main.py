@@ -117,8 +117,14 @@ def process_index_data(ctx, data_file, target_geographies):
     #NOTE: Some data does not make sense and could be filtered out
     # (i.e 10 years since diagnosis in 2020)
 
+    #Filter to remove sub ICBs
+    df_index = df_index[(
+        (df_index["Geography type"] == "Cancer Alliance") | 
+        (df_index["Geography code"].isin(target_geographies))
+    )]
+
     #Filter to select geographies
-    df_index = df_index[df_index["Geography code"].isin(target_geographies)]
+    df_index["area_core"] = df_index["Geography code"].isin(target_geographies)
 
     #Derive data_substituion
     df_index["data_substituted"] = np.where(
@@ -150,6 +156,7 @@ def process_index_data(ctx, data_file, target_geographies):
     columns_to_keep = [
         "Geography name",
         "Geography code",
+        "area_core",
         "Cancer site", 
         "Gender",
         "Age at diagnosis",
@@ -186,6 +193,7 @@ def process_index_data(ctx, data_file, target_geographies):
     rename_index = {
         "area_code": "AREA_CODE",
         "area_name": "AREA_NAME",
+        "area_core": "IS_AREA_CORE",
         "cancer_site": "CANCER_SITE",
         "gender": "GENDER",
         "age_at_diagnosis": "AGE_AT_DIAGNOSIS",
