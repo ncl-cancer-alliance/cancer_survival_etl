@@ -11,8 +11,6 @@ ETL code for processing cancer alliance level data from the NHS Digital Cancer S
 - Processes the Cancer Index data and Adult Cancer Survival data
 
 ## Usage
-The code requires a DSN setup with the NCL Sandpit set up with the name "SANDPIT".
-
 The code is self contained within the src/main.py script.
 
 The docs directory contains scripts for creating the destination tables.
